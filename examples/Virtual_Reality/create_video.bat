@@ -1,0 +1,1 @@
+C:\Python38\python.exe %~dp0..\..\src\SoziVideoCreator.py --input_file %~dp0Virtual_Reality.sozi.html --output_dir %~dp0video --width 1920 --height 1080 --fps 60 --seconds 45

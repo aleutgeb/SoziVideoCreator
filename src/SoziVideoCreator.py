@@ -9,8 +9,11 @@
 #     * python.exe -m pip install selenium
 #     * python.exe -m pip install ffmpeg-python
 #     * python.exe -m pip install Pillow
-#  * Put the Firefox Gecko driver from https://github.com/mozilla/geckodriver/releases
-#    into the same directory as SoziVideoCreator.py
+# * Put the Firefox Gecko driver from https://github.com/mozilla/geckodriver/releases into the third-party directory
+#   (or use any other directory because full path has to be specified anyway via --driver_exe command line option)
+# * Put the ffmpeg executable (if not already installed) from https://ffmpeg.org/download.html into the third-party directory
+#   (or use any other directory because full path has to be specified anyway via --ffmpeg_exe command line option).
+#   ffmpeg must be built with x264 codec support.
 #
 
 from selenium import webdriver
@@ -19,6 +22,7 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
 import os
+import sys
 import time
 import re
 import argparse
@@ -27,7 +31,7 @@ from PIL import Image
 
 class SoziVideoCreator:
     
-    def __init__(self, input_file, output_directory, width, height, fps, seconds):
+    def __init__(self, input_file, output_directory, driver_exe, ffmpeg_exe, width, height, fps, seconds):
         self._fps = fps
         self._recording_secs = seconds
         self._width = width
@@ -37,7 +41,8 @@ class SoziVideoCreator:
         self._input_filename = input_file
         self._output_directory = output_directory
         self._tmp_filename = self._input_filename + ".tmp.html"
-        self._driver_exe = os.path.dirname(os.path.realpath(__file__)) + "/geckodriver.exe"
+        self._driver_exe = driver_exe
+        self._ffmpeg_exe = ffmpeg_exe
     
     def _initialize_driver(self):
         os.environ['MOZ_HEADLESS_WIDTH'] = str(self._width + self._inset_width)
@@ -158,8 +163,8 @@ class SoziVideoCreator:
         print("Converting individual frames into video.")
         ffmpeg \
                 .input(self._output_directory + "/capture_%05d.png", framerate = self._fps) \
-                .output(self._output_directory + "/movie.mp4", crf = 25, pix_fmt='yuv420p', vcodec = 'libx264') \
-                .run()
+                .output(self._output_directory + "/video.mp4", crf = 25, pix_fmt='yuv420p', vcodec = 'libx264') \
+                .run(cmd = self._ffmpeg_exe)
         print("Finished video creation.")
         self._deinitialize_driver()
 
@@ -167,6 +172,8 @@ def parse_command_line():
     parser = argparse.ArgumentParser(description = 'Creates a video from a Sozi presentation')
     parser.add_argument('--input_file', action = 'store', type = str, required = True, help = 'input file name')
     parser.add_argument('--output_dir', action = 'store', type = str, required = True, help = 'output directory')
+    parser.add_argument('--driver_exe', action = 'store', type = str, required = True, help = 'web driver executable')
+    parser.add_argument('--ffmpeg_exe', action = 'store', type = str, required = True, help = 'ffmpeg executable')
     parser.add_argument('--width', action = 'store', type = int, required = True, help = 'width of video')
     parser.add_argument('--height', action = 'store', type = int, required = True, help = 'height of video')
     parser.add_argument('--fps', action = 'store', type = int, required = True, help = 'frames per second')
@@ -178,9 +185,15 @@ def parse_command_line():
     if not os.path.isdir(args.output_dir):
         print('The specified output directory does not exist')
         sys.exit()
+    if not os.path.isfile(args.driver_exe):
+        print('The specified web driver executable does not exist')
+        sys.exit()
+    if not os.path.isfile(args.ffmpeg_exe):
+        print('The specified ffmpeg executable does not exist.')
+        sys.exit()
     return args
 
 if __name__ == "__main__":
     args = parse_command_line()
-    videoCreator = SoziVideoCreator(args.input_file, args.output_dir, args.width, args.height, args.fps, args.seconds)
+    videoCreator = SoziVideoCreator(args.input_file, args.output_dir, args.driver_exe, args.ffmpeg_exe, args.width, args.height, args.fps, args.seconds)
     videoCreator.convert()

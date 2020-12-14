@@ -1,1 +1,1 @@
-C:\Python38\python.exe %~dp0..\..\src\SoziVideoCreator.py --input_file %~dp0Virtual_Reality.sozi.html --output_dir %~dp0video --width 1920 --height 1080 --fps 60 --seconds 45
+C:\Python39\python.exe %~dp0..\..\src\SoziVideoCreator.py --input_file %~dp0Virtual_Reality.sozi.html --output_dir %~dp0video --driver_exe %~dp0..\..\third-party\geckodriver.exe --ffmpeg_exe %~dp0..\..\third-party\ffmpeg.exe --width 1920 --height 1080 --fps 60 --seconds 45
